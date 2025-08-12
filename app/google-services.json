@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "45748150687",
+    "project_id": "fmc-pushnotification",
+    "storage_bucket": "fmc-pushnotification.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:45748150687:android:464f8deee784738d9f5daa",
+        "android_client_info": {
+          "package_name": "com.example.fmc_push_notification"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCZA3OHLO2tM-mgRGqUor6EEstIifqwruU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
