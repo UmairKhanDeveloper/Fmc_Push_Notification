@@ -1,6 +1,7 @@
 package com.example.fmc_push_notification
 
 import android.annotation.SuppressLint
+import android.provider.Settings
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -35,7 +36,7 @@ import com.example.fmc_push_notification.firebase_realtimedatabase.RealTimeViewM
 import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.launch
 
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "HardwareIds")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(navController: NavController) {
@@ -49,7 +50,8 @@ fun HomeScreen(navController: NavController) {
     var text by remember { mutableStateOf("") }
     val listState = rememberLazyListState()
 
-    // Scroll to bottom when new messages arrive
+    val currentDeviceId = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
+
     LaunchedEffect(state.item) {
         if (state.item.isNotEmpty()) {
             listState.animateScrollToItem(state.item.size - 1)
@@ -59,7 +61,7 @@ fun HomeScreen(navController: NavController) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Chat en Tiempo Real", fontWeight = FontWeight.Bold) },
+                title = { Text("Real-Time Chat", fontWeight = FontWeight.Bold) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colors.primary,
                     titleContentColor = Color.White
@@ -73,12 +75,13 @@ fun HomeScreen(navController: NavController) {
                 onSendClick = {
                     if (text.isNotBlank()) {
                         scope.launch {
+                            // senderId को यहाँ सेट करने की आवश्यकता नहीं है, क्योंकि यह रिपॉजिटरी में किया जाता है
                             viewModel.insert(
                                 RealTimeUser.RealTimeItems(text = text)
                             ).collect { result ->
                                 when (result) {
                                     is ResultState.Success -> text = ""
-                                    is ResultState.Error -> Log.e("HomeScreen", "Error: ${result.error.message}")
+                                    is ResultState.Error -> Log.e("HomeScreen", "Error: ${result.error?.message}")
                                     ResultState.Loading -> {}
                                 }
                             }
@@ -106,7 +109,7 @@ fun HomeScreen(navController: NavController) {
                 }
                 state.item.isEmpty() -> {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("Aún no hay mensajes. ¡Sé el primero en enviar uno!")
+                        Text("No messages yet. Be the first to send one!")
                     }
                 }
                 else -> {
@@ -118,7 +121,8 @@ fun HomeScreen(navController: NavController) {
                         items(state.item) { user ->
                             MessageBubble(
                                 message = user.items.text,
-                                isOwnMessage = false // TODO: hook this to your user ID logic
+                                // जाँचें कि क्या संदेश का senderId वर्तमान डिवाइस की आईडी से मेल खाता है
+                                isOwnMessage = user.items.senderId == currentDeviceId
                             )
                         }
                     }
@@ -173,7 +177,7 @@ fun MessageInput(text: String, onTextChanged: (String) -> Unit, onSendClick: () 
         OutlinedTextField(
             value = text,
             onValueChange = onTextChanged,
-            placeholder = { Text("Escribe un mensaje...") },
+            placeholder = { Text("Type a message...") },
             modifier = Modifier.weight(1f),
             shape = RoundedCornerShape(24.dp),
             singleLine = true
@@ -188,9 +192,10 @@ fun MessageInput(text: String, onTextChanged: (String) -> Unit, onSendClick: () 
         ) {
             Icon(
                 imageVector = Icons.Default.Send,
-                contentDescription = "Enviar mensaje",
+                contentDescription = "Send message",
                 tint = Color.White
             )
         }
     }
 }
+

@@ -23,10 +23,15 @@ class RealTimeDbRepository(
     override fun insert(item: RealTimeUser.RealTimeItems): Flow<ResultState<String>> =
         callbackFlow {
             trySend(ResultState.Loading)
-            val deviceId = getDeviceId()
-            val userNode = db.child("users").child(deviceId).child("items")
 
-            userNode.push().setValue(item)
+            // डिवाइस आईडी प्राप्त करें और इसे आइटम में सेट करें
+            val deviceId = getDeviceId()
+            item.senderId = deviceId
+
+            // 'chats' नामक एक साझा नोड में डेटा भेजें
+            val chatNode = db.child("chats")
+
+            chatNode.push().setValue(item)
                 .addOnCompleteListener {
                     if (it.isSuccessful) {
                         trySend(ResultState.Success("Data Inserted Successfully"))
@@ -42,8 +47,8 @@ class RealTimeDbRepository(
     override fun getItems(): Flow<ResultState<List<RealTimeUser>>> = callbackFlow {
         trySend(ResultState.Loading)
 
-        val deviceId = getDeviceId()
-        val userNode = db.child("users").child(deviceId).child("items")
+        // 'users' के बजाय 'chats' नोड को सुनें
+        val chatNode = db.child("chats")
 
         val valueEvent = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
@@ -63,20 +68,20 @@ class RealTimeDbRepository(
             }
         }
 
-        userNode.addValueEventListener(valueEvent)
+        chatNode.addValueEventListener(valueEvent)
 
         awaitClose {
-            userNode.removeEventListener(valueEvent)
+            chatNode.removeEventListener(valueEvent)
             close()
         }
     }
 
+    // डिलीट और अपडेट फ़ंक्शंस को भी 'chats' नोड का उपयोग करने के लिए अपडेट करें
     override fun delete(key: String): Flow<ResultState<String>> = callbackFlow {
         trySend(ResultState.Loading)
-        val deviceId = getDeviceId()
-        val userNode = db.child("users").child(deviceId).child("items")
+        val chatNode = db.child("chats")
 
-        userNode.child(key).removeValue()
+        chatNode.child(key).removeValue()
             .addOnCompleteListener {
                 trySend(ResultState.Success("Item deleted"))
             }
@@ -89,13 +94,10 @@ class RealTimeDbRepository(
 
     override fun update(res: RealTimeUser): Flow<ResultState<String>> = callbackFlow {
         trySend(ResultState.Loading)
+        val chatNode = db.child("chats")
+        val map = mapOf("text" to res.items.text) // "text" फ़ील्ड को अपडेट करें
 
-        val deviceId = getDeviceId()
-        val userNode = db.child("users").child(deviceId).child("items")
-
-        val map = mapOf("userFistName" to res.items.text)
-
-        userNode.child(res.key!!).updateChildren(map)
+        chatNode.child(res.key!!).updateChildren(map)
             .addOnCompleteListener {
                 trySend(ResultState.Success("Updated successfully"))
             }

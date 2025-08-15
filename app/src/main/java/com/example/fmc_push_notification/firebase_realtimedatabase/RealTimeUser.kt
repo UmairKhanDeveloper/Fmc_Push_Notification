@@ -5,9 +5,7 @@ data class RealTimeUser(
     val key: String? = ""
 ) {
     data class RealTimeItems(
-        var text: String = ""
-    ) {
-        // Default constructor for Firebase
-        constructor() : this("")
-    }
+        var text: String = "",
+        var senderId: String = "" 
+    )
 }

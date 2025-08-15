@@ -164,7 +164,7 @@ fun LoginScreen(navController: NavHostController) {
                             is ResultState.Success -> {
                                 delay(1500)
                                 isLoading = false
-                                navController.navigate(Screens.HomeScreen.route) {
+                                navController.navigate(Screens.Home.route) {
                                     popUpTo(0) { inclusive = true } // Clear everything behind Home
                                     launchSingleTop = true
                                 }
